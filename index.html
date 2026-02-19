@@ -70,6 +70,7 @@
     .tab.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
     .tab.urgent-today { box-shadow: 0 0 0 2px var(--warning); color: var(--warning); }
     .tab.urgent-hour { box-shadow: 0 0 0 2px var(--danger); color: var(--danger); }
+    .tab-count { opacity: 0.9; font-weight: 500; }
 
     .panel { display: none; padding: 1rem; }
     .panel.active { display: block; }
@@ -190,6 +191,9 @@
     .wish-card .body { padding: 1rem; }
     .wish-card .title { font-weight: 600; margin-bottom: 0.35rem; font-size: 1.05rem; }
     .wish-card .desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; }
+    .wish-card .links { margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .wish-card .links a { font-size: 0.85rem; color: var(--accent); text-decoration: none; word-break: break-all; }
+    .wish-card .links a:hover { text-decoration: underline; }
     .wish-card .actions { margin-top: 0.75rem; }
   </style>
 </head>
@@ -200,7 +204,7 @@
 
   <nav class="tabs">
     <button type="button" class="tab active" data-tab="todo">Справи</button>
-    <button type="button" class="tab" data-tab="shopping">Покупки</button>
+    <button type="button" class="tab" data-tab="shopping">Покупки <span id="shopping-tab-count" class="tab-count"></span></button>
     <button type="button" class="tab" data-tab="wishes">Побажання нареченої</button>
   </nav>
 
@@ -237,7 +241,9 @@
         <label>Заголовок</label>
         <input type="text" id="wish-title" placeholder="Назва побажання">
         <label>Опис</label>
-        <textarea id="wish-desc" placeholder="Опис або посилання..."></textarea>
+        <textarea id="wish-desc" placeholder="Опис побажання"></textarea>
+        <label>Посилання (одне або кілька — через кому або з нового рядка)</label>
+        <textarea id="wish-links" placeholder="https://..."></textarea>
         <label>Зображення</label>
         <div class="image-upload" id="wish-image-upload">
           <span>Натисніть або перетягніть зображення</span>
@@ -410,6 +416,8 @@
 
       function renderShopping() {
         const list = document.getElementById('shopping-list');
+        const tabCount = document.getElementById('shopping-tab-count');
+        if (tabCount) tabCount.textContent = shopping.length > 0 ? `(${shopping.length})` : '';
         if (shopping.length === 0) {
           list.innerHTML = '<p style="color: var(--text-muted); padding: 1rem;">Список покупок порожній.</p>';
           return;
@@ -495,19 +503,27 @@
         r.readAsDataURL(file);
       }
 
+      function parseWishLinks(raw) {
+        if (!raw || !raw.trim()) return [];
+        return raw.split(/[\n,]+/).map(s => s.trim()).filter(s => s.length > 0);
+      }
+
       document.getElementById('wish-add').addEventListener('click', () => {
         const title = document.getElementById('wish-title').value.trim();
         const desc = document.getElementById('wish-desc').value.trim();
+        const links = parseWishLinks(document.getElementById('wish-links').value);
         if (!title) return;
         wishes.push({
           id: 'w' + Date.now(),
           title,
           desc,
+          links: links,
           image: wishImageData || null
         });
         saveStorage(STORAGE_WISHES, wishes);
         document.getElementById('wish-title').value = '';
         document.getElementById('wish-desc').value = '';
+        document.getElementById('wish-links').value = '';
         wishImageData = null;
         document.getElementById('wish-preview').innerHTML = '';
         wishFileInput.value = '';
@@ -520,16 +536,22 @@
           container.innerHTML = '<p style="color: var(--text-muted); padding: 1rem;">Ще немає побажань.</p>';
           return;
         }
-        container.innerHTML = wishes.map(w => `
+        container.innerHTML = wishes.map(w => {
+          const linksHtml = (w.links && w.links.length)
+            ? `<div class="links">${w.links.map(url => `<a href="${escapeAttr(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a>`).join('')}</div>`
+            : '';
+          return `
           <div class="wish-card" data-id="${w.id}">
             ${w.image ? `<img src="${w.image}" alt="">` : '<div class="no-img">Немає зображення</div>'}
             <div class="body">
               <div class="title">${escapeHtml(w.title)}</div>
               ${w.desc ? `<div class="desc">${escapeHtml(w.desc)}</div>` : ''}
+              ${linksHtml}
               <div class="actions"><button type="button" class="btn btn-danger btn-small wish-delete">Видалити</button></div>
             </div>
           </div>
-        `).join('');
+        `;
+        }).join('');
         container.querySelectorAll('.wish-delete').forEach(btn => {
           btn.addEventListener('click', () => {
             const id = btn.closest('.wish-card').dataset.id;
@@ -544,6 +566,11 @@
         const div = document.createElement('div');
         div.textContent = s;
         return div.innerHTML;
+      }
+      function escapeAttr(s) {
+        const div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML.replace(/"/g, '&quot;');
       }
 
       renderTodo();
