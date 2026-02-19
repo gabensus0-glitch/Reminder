@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Мій Планувальник</title>
+  <style>
+    :root {
+      --bg: #1a1b26;
+      --surface: #24283b;
+      --surface-hover: #2d3142;
+      --text: #c0caf5;
+      --text-muted: #565f89;
+      --accent: #7aa2f7;
+      --accent-soft: rgba(122, 162, 247, 0.2);
+      --warning: #e0af68;
+      --warning-soft: rgba(224, 175, 104, 0.25);
+      --danger: #f7768e;
+      --danger-soft: rgba(247, 118, 142, 0.25);
+      --success: #9ece6a;
+      --radius: 12px;
+      --shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      padding-bottom: 2rem;
+    }
+
+    .header {
+      padding: 1rem 1.25rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--text-muted);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header h1 { font-size: 1.35rem; font-weight: 600; }
+
+    .tabs {
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.75rem 1rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--text-muted);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tabs::-webkit-scrollbar { height: 4px; }
+    .tabs::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 2px; }
+
+    .tab {
+      flex-shrink: 0;
+      padding: 0.6rem 1rem;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .tab:hover { background: var(--surface-hover); color: var(--text); }
+    .tab.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+    .tab.urgent-today { box-shadow: 0 0 0 2px var(--warning); color: var(--warning); }
+    .tab.urgent-hour { box-shadow: 0 0 0 2px var(--danger); color: var(--danger); }
+
+    .panel { display: none; padding: 1rem; }
+    .panel.active { display: block; }
+
+    /* Forms */
+    .form-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+    }
+    .form-card label { display: block; margin-bottom: 0.35rem; font-size: 0.9rem; color: var(--text-muted); }
+    textarea, input[type="text"], input[type="datetime-local"] {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--text-muted);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    textarea { min-height: 80px; resize: vertical; }
+    input[type="datetime-local"] { margin-bottom: 0; }
+
+    .btn {
+      padding: 0.65rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--accent); color: #1a1b26; }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-danger { background: var(--danger-soft); color: var(--danger); }
+    .btn-danger:hover { background: var(--danger); color: #1a1b26; }
+    .btn-small { padding: 0.35rem 0.65rem; font-size: 0.85rem; }
+
+    /* Todo */
+    .todo-groups { margin-top: 1rem; }
+    .todo-group { margin-bottom: 1.5rem; }
+    .todo-group-title {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid var(--text-muted);
+    }
+    .todo-item {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      border-left: 4px solid var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.75rem;
+      box-shadow: var(--shadow);
+    }
+    .todo-item.today { border-left-color: var(--warning); background: var(--warning-soft); }
+    .todo-item.urgent { border-left-color: var(--danger); background: var(--danger-soft); }
+    .todo-item .content { flex: 1; min-width: 0; }
+    .todo-item .text { margin-bottom: 0.25rem; white-space: pre-wrap; word-break: break-word; }
+    .todo-item .meta { font-size: 0.8rem; color: var(--text-muted); }
+    .todo-item .actions { flex-shrink: 0; }
+
+    /* Shopping */
+    .shopping-add { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .shopping-add input { flex: 1; margin-bottom: 0; }
+    .shopping-item {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      box-shadow: var(--shadow);
+    }
+    .shopping-item.done { opacity: 0.6; }
+    .shopping-item.done .shopping-text { text-decoration: line-through; color: var(--text-muted); }
+    .shopping-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--success); cursor: pointer; }
+
+    /* Wishes - cards */
+    .wish-form .row { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .wish-form .row input { flex: 1; margin-bottom: 0; }
+    .wish-form .image-upload {
+      border: 2px dashed var(--text-muted);
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 0.75rem;
+      transition: border-color 0.2s;
+    }
+    .wish-form .image-upload:hover, .wish-form .image-upload.dragover { border-color: var(--accent); }
+    .wish-form .image-upload input { display: none; }
+    .wish-form .preview { max-width: 200px; max-height: 150px; border-radius: 8px; margin-top: 0.5rem; }
+
+    .wish-cards { display: grid; gap: 1rem; margin-top: 1rem; }
+    .wish-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .wish-card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      background: var(--bg);
+    }
+    .wish-card .no-img { width: 100%; height: 120px; background: var(--bg); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.9rem; }
+    .wish-card .body { padding: 1rem; }
+    .wish-card .title { font-weight: 600; margin-bottom: 0.35rem; font-size: 1.05rem; }
+    .wish-card .desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; }
+    .wish-card .actions { margin-top: 0.75rem; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>Мій Планувальник</h1>
+  </header>
+
+  <nav class="tabs">
+    <button type="button" class="tab active" data-tab="todo">Справи</button>
+    <button type="button" class="tab" data-tab="shopping">Покупки</button>
+    <button type="button" class="tab" data-tab="wishes">Побажання нареченої</button>
+  </nav>
+
+  <main>
+    <!-- TODO -->
+    <section id="panel-todo" class="panel active">
+      <div class="form-card">
+        <label>Нова справа</label>
+        <textarea id="todo-text" placeholder="Що потрібно зробити?"></textarea>
+        <label style="margin-top: 0.5rem;">Дата і час</label>
+        <input type="datetime-local" id="todo-datetime">
+        <div style="margin-top: 0.75rem;">
+          <button type="button" class="btn btn-primary" id="todo-add">Додати</button>
+        </div>
+      </div>
+      <div id="todo-list" class="todo-groups"></div>
+    </section>
+
+    <!-- Shopping -->
+    <section id="panel-shopping" class="panel">
+      <div class="form-card shopping-add">
+        <input type="text" id="shopping-input" placeholder="Що купити?">
+        <button type="button" class="btn btn-primary" id="shopping-add">Додати</button>
+      </div>
+      <div id="shopping-list"></div>
+      <div id="shopping-actions" style="margin-top: 0.75rem; display: none;">
+        <button type="button" class="btn btn-danger btn-small" id="shopping-clear-done">Очистити виконані</button>
+      </div>
+    </section>
+
+    <!-- Wishes -->
+    <section id="panel-wishes" class="panel">
+      <div class="form-card wish-form">
+        <label>Заголовок</label>
+        <input type="text" id="wish-title" placeholder="Назва побажання">
+        <label>Опис</label>
+        <textarea id="wish-desc" placeholder="Опис або посилання..."></textarea>
+        <label>Зображення</label>
+        <div class="image-upload" id="wish-image-upload">
+          <span>Натисніть або перетягніть зображення</span>
+          <input type="file" id="wish-image" accept="image/*">
+          <div id="wish-preview"></div>
+        </div>
+        <button type="button" class="btn btn-primary" id="wish-add">Додати побажання</button>
+      </div>
+      <div id="wish-cards" class="wish-cards"></div>
+    </section>
+  </main>
+
+  <script>
+    (function() {
+      const STORAGE_TODO = 'reminder_todo';
+      const STORAGE_SHOPPING = 'reminder_shopping';
+      const STORAGE_WISHES = 'reminder_wishes';
+
+      function setDefaultDatetime() {
+        const now = new Date();
+        now.setHours(now.getHours() + 1);
+        now.setMinutes(0, 0, 0);
+        const el = document.getElementById('todo-datetime');
+        if (!el) return;
+        el.value = formatDatetimeLocal(now);
+      }
+
+      function formatDatetimeLocal(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const h = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        return `${y}-${m}-${day}T${h}:${min}`;
+      }
+
+      function parseStorage(key, def) {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : def;
+        } catch (_) { return def; }
+      }
+
+      function saveStorage(key, data) {
+        try { localStorage.setItem(key, JSON.stringify(data)); } catch (_) {}
+      }
+
+      // --- Tabs ---
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+        });
+      });
+
+      function updateTodoTabBadge() {
+        const tab = document.querySelector('.tab[data-tab="todo"]');
+        if (!tab) return;
+        tab.classList.remove('urgent-today', 'urgent-hour');
+        const now = Date.now();
+        const oneHour = 60 * 60 * 1000;
+        const todos = parseStorage(STORAGE_TODO, []);
+        for (const t of todos) {
+          const ts = new Date(t.datetime).getTime();
+          if (ts <= now) continue;
+          const diff = ts - now;
+          if (diff <= oneHour) { tab.classList.add('urgent-hour'); return; }
+          const sameDay = new Date(ts).toDateString() === new Date(now).toDateString();
+          if (sameDay) { tab.classList.add('urgent-today'); }
+        }
+      }
+
+      // --- TODO ---
+      let todos = parseStorage(STORAGE_TODO, []);
+
+      function renderTodo() {
+        const list = document.getElementById('todo-list');
+        if (todos.length === 0) {
+          list.innerHTML = '<p style="color: var(--text-muted); padding: 1rem;">Немає справ. Додайте нову.</p>';
+          updateTodoTabBadge();
+          return;
+        }
+
+        const now = Date.now();
+        const oneHour = 60 * 60 * 1000;
+        const grouped = {};
+        todos
+          .filter(t => new Date(t.datetime).getTime() >= now - 24 * 60 * 60 * 1000)
+          .sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime())
+          .forEach(t => {
+            const d = new Date(t.datetime);
+            const dateKey = d.toDateString();
+            const timeKey = d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+            if (!grouped[dateKey]) grouped[dateKey] = {};
+            if (!grouped[dateKey][timeKey]) grouped[dateKey][timeKey] = [];
+            grouped[dateKey][timeKey].push(t);
+          });
+
+        let html = '';
+        for (const [dateStr, byTime] of Object.entries(grouped)) {
+          const dateLabel = new Date(dateStr).toLocaleDateString('uk-UA', { weekday: 'long', day: 'numeric', month: 'long' });
+          html += `<div class="todo-group"><div class="todo-group-title">${dateLabel}</div>`;
+          for (const [timeStr, items] of Object.entries(byTime)) {
+            html += `<div class="todo-group-title" style="font-size: 0.85rem; margin-top: 0.5rem;">${timeStr}</div>`;
+            for (const t of items) {
+              const ts = new Date(t.datetime).getTime();
+              const diff = ts - now;
+              const isUrgent = diff <= oneHour && diff > 0;
+              const isToday = diff > 0 && new Date(ts).toDateString() === new Date(now).toDateString();
+              let cls = 'todo-item';
+              if (isUrgent) cls += ' urgent';
+              else if (isToday) cls += ' today';
+              const dtFormatted = new Date(t.datetime).toLocaleString('uk-UA', { dateStyle: 'short', timeStyle: 'short' });
+              html += `<div class="${cls}" data-id="${t.id}">
+                <div class="content">
+                  <div class="text">${escapeHtml(t.text)}</div>
+                  <div class="meta">${dtFormatted}</div>
+                </div>
+                <div class="actions"><button type="button" class="btn btn-danger btn-small todo-delete">Видалити</button></div>
+              </div>`;
+            }
+          }
+          html += '</div>';
+        }
+
+        const past = todos.filter(t => new Date(t.datetime).getTime() < now);
+        if (past.length) {
+          html += '<div class="todo-group"><div class="todo-group-title">Минулі</div>';
+          past.sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime()).forEach(t => {
+            const dtFormatted = new Date(t.datetime).toLocaleString('uk-UA', { dateStyle: 'short', timeStyle: 'short' });
+            html += `<div class="todo-item" data-id="${t.id}" style="opacity: 0.75;">
+              <div class="content"><div class="text">${escapeHtml(t.text)}</div><div class="meta">${dtFormatted}</div></div>
+              <div class="actions"><button type="button" class="btn btn-danger btn-small todo-delete">Видалити</button></div>
+            </div>`;
+          });
+          html += '</div>';
+        }
+
+        list.innerHTML = html;
+        list.querySelectorAll('.todo-delete').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.closest('.todo-item').dataset.id;
+            todos = todos.filter(t => t.id !== id);
+            saveStorage(STORAGE_TODO, todos);
+            renderTodo();
+          });
+        });
+        updateTodoTabBadge();
+      }
+
+      document.getElementById('todo-add').addEventListener('click', () => {
+        const text = document.getElementById('todo-text').value.trim();
+        const datetime = document.getElementById('todo-datetime').value;
+        if (!text || !datetime) return;
+        todos.push({
+          id: 't' + Date.now(),
+          text,
+          datetime
+        });
+        saveStorage(STORAGE_TODO, todos);
+        document.getElementById('todo-text').value = '';
+        setDefaultDatetime(); // після додавання — знову дефолт на +1 год
+        renderTodo();
+      });
+
+      // --- Shopping ---
+      let shopping = parseStorage(STORAGE_SHOPPING, []);
+
+      function renderShopping() {
+        const list = document.getElementById('shopping-list');
+        if (shopping.length === 0) {
+          list.innerHTML = '<p style="color: var(--text-muted); padding: 1rem;">Список покупок порожній.</p>';
+          return;
+        }
+        list.innerHTML = shopping.map((s, i) => `
+          <div class="shopping-item ${s.done ? 'done' : ''}" data-i="${i}">
+            <label style="flex: 1; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" ${s.done ? 'checked' : ''}>
+              <span class="shopping-text">${escapeHtml(s.text)}</span>
+            </label>
+            <button type="button" class="btn btn-danger btn-small shopping-delete">Видалити</button>
+          </div>
+        `).join('');
+        list.querySelectorAll('.shopping-item input[type="checkbox"]').forEach(cb => {
+          cb.addEventListener('change', () => {
+            const i = parseInt(cb.closest('.shopping-item').dataset.i, 10);
+            shopping[i].done = cb.checked;
+            saveStorage(STORAGE_SHOPPING, shopping);
+            renderShopping();
+          });
+        });
+        list.querySelectorAll('.shopping-delete').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const i = parseInt(btn.closest('.shopping-item').dataset.i, 10);
+            shopping.splice(i, 1);
+            saveStorage(STORAGE_SHOPPING, shopping);
+            renderShopping();
+          });
+        });
+        const hasDone = shopping.some(s => s.done);
+        const actionsEl = document.getElementById('shopping-actions');
+        if (actionsEl) {
+          actionsEl.style.display = hasDone ? 'block' : 'none';
+        }
+      }
+
+      document.getElementById('shopping-clear-done').addEventListener('click', () => {
+        shopping = shopping.filter(s => !s.done);
+        saveStorage(STORAGE_SHOPPING, shopping);
+        renderShopping();
+      });
+
+      document.getElementById('shopping-add').addEventListener('click', () => {
+        const input = document.getElementById('shopping-input');
+        const text = input.value.trim();
+        if (!text) return;
+        shopping.push({ text, done: false });
+        saveStorage(STORAGE_SHOPPING, shopping);
+        input.value = '';
+        renderShopping();
+      });
+      document.getElementById('shopping-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('shopping-add').click();
+      });
+
+      // --- Wishes ---
+      let wishes = parseStorage(STORAGE_WISHES, []);
+      let wishImageData = null;
+
+      const wishUpload = document.getElementById('wish-image-upload');
+      const wishFileInput = document.getElementById('wish-image');
+      wishUpload.addEventListener('click', () => wishFileInput.click());
+      wishUpload.addEventListener('dragover', e => { e.preventDefault(); wishUpload.classList.add('dragover'); });
+      wishUpload.addEventListener('dragleave', () => wishUpload.classList.remove('dragover'));
+      wishUpload.addEventListener('drop', e => {
+        e.preventDefault();
+        wishUpload.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) readWishImage(file);
+      });
+      wishFileInput.addEventListener('change', () => {
+        const file = wishFileInput.files[0];
+        if (file) readWishImage(file);
+      });
+
+      function readWishImage(file) {
+        const r = new FileReader();
+        r.onload = () => {
+          wishImageData = r.result;
+          const preview = document.getElementById('wish-preview');
+          preview.innerHTML = '<img class="preview" src="' + r.result + '" alt="">';
+        };
+        r.readAsDataURL(file);
+      }
+
+      document.getElementById('wish-add').addEventListener('click', () => {
+        const title = document.getElementById('wish-title').value.trim();
+        const desc = document.getElementById('wish-desc').value.trim();
+        if (!title) return;
+        wishes.push({
+          id: 'w' + Date.now(),
+          title,
+          desc,
+          image: wishImageData || null
+        });
+        saveStorage(STORAGE_WISHES, wishes);
+        document.getElementById('wish-title').value = '';
+        document.getElementById('wish-desc').value = '';
+        wishImageData = null;
+        document.getElementById('wish-preview').innerHTML = '';
+        wishFileInput.value = '';
+        renderWishes();
+      });
+
+      function renderWishes() {
+        const container = document.getElementById('wish-cards');
+        if (wishes.length === 0) {
+          container.innerHTML = '<p style="color: var(--text-muted); padding: 1rem;">Ще немає побажань.</p>';
+          return;
+        }
+        container.innerHTML = wishes.map(w => `
+          <div class="wish-card" data-id="${w.id}">
+            ${w.image ? `<img src="${w.image}" alt="">` : '<div class="no-img">Немає зображення</div>'}
+            <div class="body">
+              <div class="title">${escapeHtml(w.title)}</div>
+              ${w.desc ? `<div class="desc">${escapeHtml(w.desc)}</div>` : ''}
+              <div class="actions"><button type="button" class="btn btn-danger btn-small wish-delete">Видалити</button></div>
+            </div>
+          </div>
+        `).join('');
+        container.querySelectorAll('.wish-delete').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.closest('.wish-card').dataset.id;
+            wishes = wishes.filter(x => x.id !== id);
+            saveStorage(STORAGE_WISHES, wishes);
+            renderWishes();
+          });
+        });
+      }
+
+      function escapeHtml(s) {
+        const div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      renderTodo();
+      renderShopping();
+      renderWishes();
+      setInterval(updateTodoTabBadge, 60000);
+    })();
+  </script>
+</body>
+</html>
