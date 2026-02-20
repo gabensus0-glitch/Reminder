@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Мій Планувальник</title>
+  <link rel="manifest" crossorigin="use-credentials" href="/manifest.json">
   <style>
     :root {
       --bg: #1a1b26;
@@ -19,10 +21,15 @@
       --danger-soft: rgba(247, 118, 142, 0.25);
       --success: #9ece6a;
       --radius: 12px;
-      --shadow: 0 4px 20px rgba(0,0,0,0.3);
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg);
@@ -40,7 +47,11 @@
       top: 0;
       z-index: 10;
     }
-    .header h1 { font-size: 1.35rem; font-weight: 600; }
+
+    .header h1 {
+      font-size: 1.35rem;
+      font-weight: 600;
+    }
 
     .tabs {
       display: flex;
@@ -51,8 +62,15 @@
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
-    .tabs::-webkit-scrollbar { height: 4px; }
-    .tabs::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 2px; }
+
+    .tabs::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .tabs::-webkit-scrollbar-thumb {
+      background: var(--text-muted);
+      border-radius: 2px;
+    }
 
     .tab {
       flex-shrink: 0;
@@ -66,14 +84,41 @@
       transition: all 0.2s;
       white-space: nowrap;
     }
-    .tab:hover { background: var(--surface-hover); color: var(--text); }
-    .tab.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-    .tab.urgent-today { box-shadow: 0 0 0 2px var(--warning); color: var(--warning); }
-    .tab.urgent-hour { box-shadow: 0 0 0 2px var(--danger); color: var(--danger); }
-    .tab-count { opacity: 0.9; font-weight: 500; }
 
-    .panel { display: none; padding: 1rem; }
-    .panel.active { display: block; }
+    .tab:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    .tab.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .tab.urgent-today {
+      box-shadow: 0 0 0 2px var(--warning);
+      color: var(--warning);
+    }
+
+    .tab.urgent-hour {
+      box-shadow: 0 0 0 2px var(--danger);
+      color: var(--danger);
+    }
+
+    .tab-count {
+      opacity: 0.9;
+      font-weight: 500;
+    }
+
+    .panel {
+      display: none;
+      padding: 1rem;
+    }
+
+    .panel.active {
+      display: block;
+    }
 
     /* Forms */
     .form-card {
@@ -83,8 +128,17 @@
       margin-bottom: 1rem;
       box-shadow: var(--shadow);
     }
-    .form-card label { display: block; margin-bottom: 0.35rem; font-size: 0.9rem; color: var(--text-muted); }
-    textarea, input[type="text"], input[type="datetime-local"] {
+
+    .form-card label {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    textarea,
+    input[type="text"],
+    input[type="datetime-local"] {
       width: 100%;
       padding: 0.65rem 0.85rem;
       border: 1px solid var(--text-muted);
@@ -94,8 +148,15 @@
       font-size: 1rem;
       margin-bottom: 0.75rem;
     }
-    textarea { min-height: 80px; resize: vertical; }
-    input[type="datetime-local"] { margin-bottom: 0; }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    input[type="datetime-local"] {
+      margin-bottom: 0;
+    }
 
     .btn {
       padding: 0.65rem 1.2rem;
@@ -105,15 +166,40 @@
       cursor: pointer;
       transition: all 0.2s;
     }
-    .btn-primary { background: var(--accent); color: #1a1b26; }
-    .btn-primary:hover { filter: brightness(1.1); }
-    .btn-danger { background: var(--danger-soft); color: var(--danger); }
-    .btn-danger:hover { background: var(--danger); color: #1a1b26; }
-    .btn-small { padding: 0.35rem 0.65rem; font-size: 0.85rem; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #1a1b26;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-danger {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: var(--danger);
+      color: #1a1b26;
+    }
+
+    .btn-small {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.85rem;
+    }
 
     /* Todo */
-    .todo-groups { margin-top: 1rem; }
-    .todo-group { margin-bottom: 1.5rem; }
+    .todo-groups {
+      margin-top: 1rem;
+    }
+
+    .todo-group {
+      margin-bottom: 1.5rem;
+    }
+
     .todo-group-title {
       font-size: 0.9rem;
       color: var(--text-muted);
@@ -121,6 +207,7 @@
       padding-bottom: 0.25rem;
       border-bottom: 1px solid var(--text-muted);
     }
+
     .todo-item {
       background: var(--surface);
       border-radius: var(--radius);
@@ -133,16 +220,49 @@
       gap: 0.75rem;
       box-shadow: var(--shadow);
     }
-    .todo-item.today { border-left-color: var(--warning); background: var(--warning-soft); }
-    .todo-item.urgent { border-left-color: var(--danger); background: var(--danger-soft); }
-    .todo-item .content { flex: 1; min-width: 0; }
-    .todo-item .text { margin-bottom: 0.25rem; white-space: pre-wrap; word-break: break-word; }
-    .todo-item .meta { font-size: 0.8rem; color: var(--text-muted); }
-    .todo-item .actions { flex-shrink: 0; }
+
+    .todo-item.today {
+      border-left-color: var(--warning);
+      background: var(--warning-soft);
+    }
+
+    .todo-item.urgent {
+      border-left-color: var(--danger);
+      background: var(--danger-soft);
+    }
+
+    .todo-item .content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .todo-item .text {
+      margin-bottom: 0.25rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .todo-item .meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .todo-item .actions {
+      flex-shrink: 0;
+    }
 
     /* Shopping */
-    .shopping-add { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-    .shopping-add input { flex: 1; margin-bottom: 0; }
+    .shopping-add {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .shopping-add input {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
     .shopping-item {
       background: var(--surface);
       border-radius: var(--radius);
@@ -154,13 +274,35 @@
       gap: 0.75rem;
       box-shadow: var(--shadow);
     }
-    .shopping-item.done { opacity: 0.6; }
-    .shopping-item.done .shopping-text { text-decoration: line-through; color: var(--text-muted); }
-    .shopping-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--success); cursor: pointer; }
+
+    .shopping-item.done {
+      opacity: 0.6;
+    }
+
+    .shopping-item.done .shopping-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .shopping-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--success);
+      cursor: pointer;
+    }
 
     /* Wishes - cards */
-    .wish-form .row { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; }
-    .wish-form .row input { flex: 1; margin-bottom: 0; }
+    .wish-form .row {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .wish-form .row input {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
     .wish-form .image-upload {
       border: 2px dashed var(--text-muted);
       border-radius: 8px;
@@ -170,33 +312,94 @@
       margin-bottom: 0.75rem;
       transition: border-color 0.2s;
     }
-    .wish-form .image-upload:hover, .wish-form .image-upload.dragover { border-color: var(--accent); }
-    .wish-form .image-upload input { display: none; }
-    .wish-form .preview { max-width: 200px; max-height: 150px; border-radius: 8px; margin-top: 0.5rem; }
 
-    .wish-cards { display: grid; gap: 1rem; margin-top: 1rem; }
+    .wish-form .image-upload:hover,
+    .wish-form .image-upload.dragover {
+      border-color: var(--accent);
+    }
+
+    .wish-form .image-upload input {
+      display: none;
+    }
+
+    .wish-form .preview {
+      max-width: 200px;
+      max-height: 150px;
+      border-radius: 8px;
+      margin-top: 0.5rem;
+    }
+
+    .wish-cards {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
     .wish-card {
       background: var(--surface);
       border-radius: var(--radius);
       overflow: hidden;
       box-shadow: var(--shadow);
     }
+
     .wish-card img {
       width: 100%;
       height: 160px;
       object-fit: cover;
       background: var(--bg);
     }
-    .wish-card .no-img { width: 100%; height: 120px; background: var(--bg); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.9rem; }
-    .wish-card .body { padding: 1rem; }
-    .wish-card .title { font-weight: 600; margin-bottom: 0.35rem; font-size: 1.05rem; }
-    .wish-card .desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; }
-    .wish-card .links { margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .wish-card .links a { font-size: 0.85rem; color: var(--accent); text-decoration: none; word-break: break-all; }
-    .wish-card .links a:hover { text-decoration: underline; }
-    .wish-card .actions { margin-top: 0.75rem; }
+
+    .wish-card .no-img {
+      width: 100%;
+      height: 120px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .wish-card .body {
+      padding: 1rem;
+    }
+
+    .wish-card .title {
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      font-size: 1.05rem;
+    }
+
+    .wish-card .desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .wish-card .links {
+      margin-top: 0.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .wish-card .links a {
+      font-size: 0.85rem;
+      color: var(--accent);
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .wish-card .links a:hover {
+      text-decoration: underline;
+    }
+
+    .wish-card .actions {
+      margin-top: 0.75rem;
+    }
   </style>
 </head>
+
 <body>
   <header class="header">
     <h1>Мій Планувальник</h1>
@@ -204,7 +407,8 @@
 
   <nav class="tabs">
     <button type="button" class="tab active" data-tab="todo">Справи</button>
-    <button type="button" class="tab" data-tab="shopping">Покупки <span id="shopping-tab-count" class="tab-count"></span></button>
+    <button type="button" class="tab" data-tab="shopping">Покупки <span id="shopping-tab-count"
+        class="tab-count"></span></button>
     <button type="button" class="tab" data-tab="wishes">Побажання нареченої</button>
   </nav>
 
@@ -257,7 +461,7 @@
   </main>
 
   <script>
-    (function() {
+    (function () {
       const STORAGE_TODO = 'reminder_todo';
       const STORAGE_SHOPPING = 'reminder_shopping';
       const STORAGE_WISHES = 'reminder_wishes';
@@ -288,7 +492,7 @@
       }
 
       function saveStorage(key, data) {
-        try { localStorage.setItem(key, JSON.stringify(data)); } catch (_) {}
+        try { localStorage.setItem(key, JSON.stringify(data)); } catch (_) { }
       }
 
       // --- Tabs ---
@@ -580,4 +784,5 @@
     })();
   </script>
 </body>
+
 </html>
