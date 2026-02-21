@@ -1,29 +1,33 @@
 {
-    "name": "Мій Планувальник",
-    "short_name": "Планувальник",
-    "description": "Планувальник",
-    "start_url": "/?version=1",
-    "version": "1",
-    "lang": "uk-UA",
-    "theme_color": "#21ac50",
-    "background_color": "#21ac50",
-    "display": "standalone",
-    "display_override": [
-        "window-controls-overlay"
-    ],
-    "orientation": "portrait",
-    "icons": [
-        {
-            "purpose": "any",
-            "src": "/pwa-icon.jpg",
-            "sizes": "360x360",
-            "type": "image/jpg"
-        }
-    ],
-    "capture_links": "existing_client_event",
-    "url_handlers": [
-        {
-            "origin": "https://gabensus0-glitch.github.io/Reminder/"
-        }
-    ]
+  "name": "Мій Планувальник",
+  "short_name": "Планувальник",
+  "description": "Справи, покупки та побажання нареченої",
+  "start_url": "./index.html",
+  "scope": "./",
+  "id": "./",
+  "lang": "uk",
+  "theme_color": "#1a1b26",
+  "background_color": "#1a1b26",
+  "display": "standalone",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "pwa-icon.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "pwa-icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "pwa-icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ]
 }
