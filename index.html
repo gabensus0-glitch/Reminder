@@ -228,6 +228,7 @@
       margin-bottom: 0.5rem;
       border-left: 4px solid var(--text-muted);
       display: flex;
+      flex-direction: column;
       justify-content: space-between;
       align-items: flex-start;
       gap: 0.75rem;
@@ -272,6 +273,8 @@
 
     .todo-item .actions {
       flex-shrink: 0;
+      display: flex;
+      gap: 0.5rem;
     }
 
     /* Shopping */
@@ -419,6 +422,8 @@
 
     .wish-card .actions {
       margin-top: 0.75rem;
+      display: flex;
+      gap: 0.5rem;
     }
   </style>
 </head>
@@ -490,6 +495,7 @@
       const STORAGE_TODO = 'reminder_todo';
       const STORAGE_SHOPPING = 'reminder_shopping';
       const STORAGE_WISHES = 'reminder_wishes';
+      const STORAGE_ACTIVE_TAB = 'reminder_active_tab';
 
       function setDefaultDatetime() {
         const now = new Date();
@@ -521,14 +527,27 @@
       }
 
       // --- Tabs ---
+      function switchTab(tabKey) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        const tabEl = document.querySelector('.tab[data-tab="' + tabKey + '"]');
+        const panelEl = document.getElementById('panel-' + tabKey);
+        if (tabEl) tabEl.classList.add('active');
+        if (panelEl) panelEl.classList.add('active');
+      }
+
       document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', () => {
-          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-          document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-          tab.classList.add('active');
-          document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+          const tabKey = tab.dataset.tab;
+          switchTab(tabKey);
+          try { localStorage.setItem(STORAGE_ACTIVE_TAB, tabKey); } catch (_) { }
         });
       });
+
+      const savedTab = localStorage.getItem(STORAGE_ACTIVE_TAB);
+      if (savedTab === 'todo' || savedTab === 'shopping' || savedTab === 'wishes') {
+        switchTab(savedTab);
+      }
 
       function updateTodoTabBadge() {
         const tab = document.querySelector('.tab[data-tab="todo"]');
