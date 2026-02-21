@@ -4,8 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1b26">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Мій Планувальник</title>
-  <link rel="manifest" crossorigin="use-credentials" href="/manifest.json">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="pwa-icon.jpg">
   <style>
     :root {
       --bg: #1a1b26;
@@ -191,6 +195,15 @@
       font-size: 0.85rem;
     }
 
+    .btn-secondary {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .btn-secondary:hover {
+      filter: brightness(1.1);
+    }
+
     /* Todo */
     .todo-groups {
       margin-top: 1rem;
@@ -229,6 +242,16 @@
     .todo-item.urgent {
       border-left-color: var(--danger);
       background: var(--danger-soft);
+    }
+
+    .todo-item.past {
+      background: #16161e;
+      border-left-color: var(--text-muted);
+    }
+
+    .todo-item.past .text,
+    .todo-item.past .meta {
+      color: #484b5e;
     }
 
     .todo-item .content {
@@ -422,6 +445,7 @@
         <input type="datetime-local" id="todo-datetime">
         <div style="margin-top: 0.75rem;">
           <button type="button" class="btn btn-primary" id="todo-add">Додати</button>
+          <span id="todo-edit-hint" style="margin-left: 0.5rem; font-size: 0.85rem; color: var(--text-muted); display: none;">Редагування справи</span>
         </div>
       </div>
       <div id="todo-list" class="todo-groups"></div>
@@ -455,6 +479,7 @@
           <div id="wish-preview"></div>
         </div>
         <button type="button" class="btn btn-primary" id="wish-add">Додати побажання</button>
+        <span id="wish-edit-hint" style="margin-left: 0.5rem; font-size: 0.85rem; color: var(--text-muted); display: none;">Редагування побажання</span>
       </div>
       <div id="wish-cards" class="wish-cards"></div>
     </section>
@@ -568,7 +593,7 @@
                   <div class="text">${escapeHtml(t.text)}</div>
                   <div class="meta">${dtFormatted}</div>
                 </div>
-                <div class="actions"><button type="button" class="btn btn-danger btn-small todo-delete">Видалити</button></div>
+                <div class="actions"><button type="button" class="btn btn-secondary btn-small todo-edit">Редагувати</button><button type="button" class="btn btn-danger btn-small todo-delete">Видалити</button></div>
               </div>`;
             }
           }
@@ -580,9 +605,9 @@
           html += '<div class="todo-group"><div class="todo-group-title">Минулі</div>';
           past.sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime()).forEach(t => {
             const dtFormatted = new Date(t.datetime).toLocaleString('uk-UA', { dateStyle: 'short', timeStyle: 'short' });
-            html += `<div class="todo-item" data-id="${t.id}" style="opacity: 0.75;">
+            html += `<div class="todo-item past" data-id="${t.id}">
               <div class="content"><div class="text">${escapeHtml(t.text)}</div><div class="meta">${dtFormatted}</div></div>
-              <div class="actions"><button type="button" class="btn btn-danger btn-small todo-delete">Видалити</button></div>
+              <div class="actions"><button type="button" class="btn btn-secondary btn-small todo-edit">Редагувати</button><button type="button" class="btn btn-danger btn-small todo-delete">Видалити</button></div>
             </div>`;
           });
           html += '</div>';
@@ -592,26 +617,59 @@
         list.querySelectorAll('.todo-delete').forEach(btn => {
           btn.addEventListener('click', () => {
             const id = btn.closest('.todo-item').dataset.id;
+            if (editingTodoId === id) cancelTodoEdit();
             todos = todos.filter(t => t.id !== id);
             saveStorage(STORAGE_TODO, todos);
             renderTodo();
           });
         });
+        list.querySelectorAll('.todo-edit').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.closest('.todo-item').dataset.id;
+            const t = todos.find(x => x.id === id);
+            if (!t) return;
+            editingTodoId = id;
+            document.getElementById('todo-text').value = t.text;
+            document.getElementById('todo-datetime').value = t.datetime.indexOf('T') !== -1 ? t.datetime : t.datetime.replace(' ', 'T');
+            document.getElementById('todo-add').textContent = 'Зберегти';
+            document.getElementById('todo-edit-hint').style.display = 'inline';
+          });
+        });
         updateTodoTabBadge();
+      }
+
+      let editingTodoId = null;
+
+      function cancelTodoEdit() {
+        editingTodoId = null;
+        document.getElementById('todo-add').textContent = 'Додати';
+        document.getElementById('todo-edit-hint').style.display = 'none';
+        document.getElementById('todo-text').value = '';
+        setDefaultDatetime();
       }
 
       document.getElementById('todo-add').addEventListener('click', () => {
         const text = document.getElementById('todo-text').value.trim();
         const datetime = document.getElementById('todo-datetime').value;
         if (!text || !datetime) return;
-        todos.push({
-          id: 't' + Date.now(),
-          text,
-          datetime
-        });
-        saveStorage(STORAGE_TODO, todos);
-        document.getElementById('todo-text').value = '';
-        setDefaultDatetime(); // після додавання — знову дефолт на +1 год
+        if (editingTodoId) {
+          const t = todos.find(x => x.id === editingTodoId);
+          if (t) {
+            t.text = text;
+            t.datetime = datetime;
+            saveStorage(STORAGE_TODO, todos);
+          }
+          cancelTodoEdit();
+        } else {
+          todos.push({
+            id: 't' + Date.now(),
+            text,
+            datetime
+          });
+          saveStorage(STORAGE_TODO, todos);
+          document.getElementById('todo-text').value = '';
+          setDefaultDatetime();
+        }
         renderTodo();
       });
 
@@ -717,20 +775,32 @@
         const desc = document.getElementById('wish-desc').value.trim();
         const links = parseWishLinks(document.getElementById('wish-links').value);
         if (!title) return;
-        wishes.push({
-          id: 'w' + Date.now(),
-          title,
-          desc,
-          links: links,
-          image: wishImageData || null
-        });
-        saveStorage(STORAGE_WISHES, wishes);
-        document.getElementById('wish-title').value = '';
-        document.getElementById('wish-desc').value = '';
-        document.getElementById('wish-links').value = '';
-        wishImageData = null;
-        document.getElementById('wish-preview').innerHTML = '';
-        wishFileInput.value = '';
+        if (editingWishId) {
+          const w = wishes.find(x => x.id === editingWishId);
+          if (w) {
+            w.title = title;
+            w.desc = desc;
+            w.links = links;
+            w.image = wishImageData || w.image;
+            saveStorage(STORAGE_WISHES, wishes);
+          }
+          cancelWishEdit();
+        } else {
+          wishes.push({
+            id: 'w' + Date.now(),
+            title,
+            desc,
+            links: links,
+            image: wishImageData || null
+          });
+          saveStorage(STORAGE_WISHES, wishes);
+          document.getElementById('wish-title').value = '';
+          document.getElementById('wish-desc').value = '';
+          document.getElementById('wish-links').value = '';
+          wishImageData = null;
+          document.getElementById('wish-preview').innerHTML = '';
+          wishFileInput.value = '';
+        }
         renderWishes();
       });
 
@@ -751,7 +821,7 @@
               <div class="title">${escapeHtml(w.title)}</div>
               ${w.desc ? `<div class="desc">${escapeHtml(w.desc)}</div>` : ''}
               ${linksHtml}
-              <div class="actions"><button type="button" class="btn btn-danger btn-small wish-delete">Видалити</button></div>
+              <div class="actions"><button type="button" class="btn btn-secondary btn-small wish-edit">Редагувати</button><button type="button" class="btn btn-danger btn-small wish-delete">Видалити</button></div>
             </div>
           </div>
         `;
@@ -759,11 +829,42 @@
         container.querySelectorAll('.wish-delete').forEach(btn => {
           btn.addEventListener('click', () => {
             const id = btn.closest('.wish-card').dataset.id;
+            if (editingWishId === id) cancelWishEdit();
             wishes = wishes.filter(x => x.id !== id);
             saveStorage(STORAGE_WISHES, wishes);
             renderWishes();
           });
         });
+        container.querySelectorAll('.wish-edit').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.closest('.wish-card').dataset.id;
+            const w = wishes.find(x => x.id === id);
+            if (!w) return;
+            editingWishId = id;
+            document.getElementById('wish-title').value = w.title;
+            document.getElementById('wish-desc').value = w.desc || '';
+            document.getElementById('wish-links').value = (w.links && w.links.length) ? w.links.join('\n') : '';
+            wishImageData = w.image || null;
+            const preview = document.getElementById('wish-preview');
+            preview.innerHTML = wishImageData ? '<img class="preview" src="' + wishImageData + '" alt="">' : '';
+            document.getElementById('wish-add').textContent = 'Зберегти зміни';
+            document.getElementById('wish-edit-hint').style.display = 'inline';
+          });
+        });
+      }
+
+      let editingWishId = null;
+
+      function cancelWishEdit() {
+        editingWishId = null;
+        wishImageData = null;
+        document.getElementById('wish-add').textContent = 'Додати побажання';
+        document.getElementById('wish-edit-hint').style.display = 'none';
+        document.getElementById('wish-title').value = '';
+        document.getElementById('wish-desc').value = '';
+        document.getElementById('wish-links').value = '';
+        document.getElementById('wish-preview').innerHTML = '';
+        wishFileInput.value = '';
       }
 
       function escapeHtml(s) {
@@ -782,6 +883,12 @@
       renderWishes();
       setInterval(updateTodoTabBadge, 60000);
     })();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js', { scope: './' }).then(() => {}).catch(() => {});
+      });
+    }
   </script>
 </body>
 
