@@ -906,7 +906,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         console.log('registering service worker');
-        navigator.serviceWorker.register('sw.js', { scope: './' }).then(() => {}).catch(() => {});
+        //navigator.serviceWorker.register('sw.js', { scope: './' }).then(() => {}).catch(() => {});
       });
     }
   </script>
