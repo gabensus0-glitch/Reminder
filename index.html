@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Мій Планувальник</title>
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="pwa-icon.jpg">
   <style>
     :root {
@@ -905,6 +905,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
+        console.log('registering service worker');
         navigator.serviceWorker.register('sw.js', { scope: './' }).then(() => {}).catch(() => {});
       });
     }
